@@ -9,6 +9,7 @@ import reportWebVitals from "./reportWebVitals";
 import SettingsProvider from "./contexts/SettingsContext";
 import { store } from "./redux/store";
 import { Provider as ReduxProvider} from "react-redux";
+import ChatProvider from "./contexts/chatProvider";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -18,7 +19,9 @@ root.render(
       <ReduxProvider store={store}>
       <SettingsProvider>
         <BrowserRouter>
-          <App />
+          <ChatProvider>
+            <App />
+          </ChatProvider>
         </BrowserRouter>
       </SettingsProvider>
       </ReduxProvider>

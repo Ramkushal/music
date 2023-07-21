@@ -1,9 +1,16 @@
 import { Box, Fab, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { styled, useTheme } from "@mui/material/styles";
 import { LinkSimple, PaperPlaneTilt, Smiley,Camera, File, Image, Sticker, User } from 'phosphor-react';
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
+import { useMessageContext } from './MessageContext';
+import { ChatState } from '../../contexts/chatProvider';
+import axios from 'axios';
+import { io } from 'socket.io-client';
+
+const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
+var socket;
 
 const StyledInput = styled(TextField)(({ theme }) => ({
     "& .MuiInputBase-input": {
@@ -45,10 +52,19 @@ const StyledInput = styled(TextField)(({ theme }) => ({
     }
   ];
 
-const ChatInput = ({setOpenPicker}) =>{
+const ChatInput = ({setOpenPicker, onInputChange}) =>{
     const [openAction, setOpenAction] = useState(false);
+    const [inputValue, setInputValue] = useState(''); 
+    const handleInputChange = (event) => {
+        const value = event.target.value;
+        setInputValue(value);
+        onInputChange(value); 
+    };
     return (
-        <StyledInput fullWidth placeholder='Write a message...' variant='filled' InputProps={{
+        <StyledInput fullWidth placeholder='Write a message...' variant='filled' 
+        value={inputValue}
+        onChange={handleInputChange}
+        InputProps={{
             disableUnderline: true,
             startAdornment: 
             <Stack sx={{width:'max-content'}}>
@@ -85,6 +101,50 @@ const ChatInput = ({setOpenPicker}) =>{
 const Footer = () => {
     const theme = useTheme();
     const [openPicker, setOpenPicker] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const {messages ,setMessages ,setIsTyping, setSocketConnected} = useMessageContext();
+    const { selectedChat, user, notification, setNotification } =
+      ChatState();
+    const handleInputChange = (value) => {
+        setInputValue(value);
+    };
+    const sendMessage = async () => {
+        if (inputValue) {
+        socket.emit("stop typing", selectedChat._id);
+        try {
+            const config = {
+            headers: {
+                "Content-type": "application/json",
+                Authorization: `Bearer ${user.token}`,
+            },
+            };
+            setInputValue("");
+            const { data } = await axios.post(
+            "/api/message",
+            {
+                content: inputValue,
+                chatId: selectedChat,
+            },
+            config
+            );
+            socket.emit("new message", data);
+            console.log(data);
+            setMessages([...messages, data]);
+        } catch (error) {
+            console.log(error);
+        }
+        }
+    };
+    useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", () => setSocketConnected(true));
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
+
+    // eslint-disable-next-line
+  }, []);
+
   return (
     <Box p={2} sx={{ width:'100%', backgroundColor: theme.palette.mode === 'light' ? '#F8FAFF' :
      theme.palette.background.paper, boxShadow:'0px 0px 2px rgba(0,0,0,0.25)'}}>
@@ -95,13 +155,13 @@ const Footer = () => {
             <Box sx={{ display: openPicker ? 'inline' : 'none' , zIndex:10, position:'fixed',bottom:81, right:100}}>
                 <Picker theme={theme.palette.mode} data={data} onEmojiSelect={console.log}/>
             </Box> 
-            <ChatInput setOpenPicker={setOpenPicker}/>
+            <ChatInput setOpenPicker={setOpenPicker} onInputChange={handleInputChange}/>
         </Stack>
         
         <Box sx={{height:48, width: 48, backgroundColor:theme.palette.primary.main, 
         borderRadius: 1.5}}>
             <Stack sx={{height:'100%', width:'100%', alignItems:'center', justifyContent:'center'}}>
-                <IconButton>
+                <IconButton onClick={sendMessage}>
                     <PaperPlaneTilt color='#fff'/>
                 </IconButton>
             </Stack>

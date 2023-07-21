@@ -116,7 +116,7 @@ const TextMsg = ({el,menu}) => {
                     theme.palette.primary.main, borderRadius: 1.5, width: 'max-content'
             }}>
                 <Typography variant='body2' color={el.incoming ? theme.palette.text : '#fff'}>
-                    {el.message}
+                    {el.content}
                 </Typography>
             </Box>
             {menu && <MessageOptions/>}

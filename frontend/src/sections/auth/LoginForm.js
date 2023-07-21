@@ -6,11 +6,12 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Alert, Button, IconButton, InputAdornment, Link, Stack } from '@mui/material';
 import { RHFTextField } from '../../components/hook-form';
 import { Eye, EyeSlash } from 'phosphor-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
 
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   //validation rules 
   const loginSchema = Yup.object().shape({
@@ -19,8 +20,8 @@ const LoginForm = () => {
   });
 
   const defaultValues = {
-    email:'dulanjali@gmail.com',
-    password:'dula@123'
+    email:'',
+    password:''
   };
 
   const methods = useForm({
@@ -34,6 +35,26 @@ const LoginForm = () => {
    const onSubmit = async (data) =>{
         try {
             //submit data to backend
+            const response = await fetch('/api/user/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+              // Registration successful
+              // You can redirect or perform any other action here
+              const data = await response.json();
+              localStorage.setItem("userInfo", JSON.stringify(data));
+              console.log('login successful');
+              navigate("/app");
+            } else {
+              // Registration failed
+              const errorData = await response.json();
+              throw new Error(errorData.message);
+            }
         } catch (error) {
             console.log(error);
             reset();

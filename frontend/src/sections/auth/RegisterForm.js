@@ -6,10 +6,13 @@ import FormProvider from '../../components/hook-form/FormProvider';
 import { Alert, Button, IconButton, InputAdornment, Stack } from '@mui/material';
 import { RHFTextField } from '../../components/hook-form';
 import { Eye, EyeSlash } from 'phosphor-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const RegisterForm = () => {
 
     const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
 
     //validation rules 
     const registerSchema = Yup.object().shape({
@@ -22,8 +25,8 @@ const RegisterForm = () => {
     const defaultValues = {
       firstName:'',
       lastName:'',
-      email:'dulanjali@gmail.com',
-      password:'dula@123'
+      email:'',
+      password:''
     };
   
     const methods = useForm({
@@ -36,7 +39,27 @@ const RegisterForm = () => {
   
      const onSubmit = async (data) =>{
           try {
-              //submit data to backend
+              //submit to backend
+              const response = await fetch('/api/user/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+              // Registration successful
+              // You can redirect or perform any other action here
+              const data = await response.json();
+              localStorage.setItem("userInfo", JSON.stringify(data));
+              console.log('Registration successful');
+              navigate("/app");
+            } else {
+              // Registration failed
+              const errorData = await response.json();
+              throw new Error(errorData.message);
+            }
           } catch (error) {
               console.log(error);
               reset();

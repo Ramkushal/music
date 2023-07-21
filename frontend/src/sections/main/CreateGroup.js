@@ -8,7 +8,7 @@ import { RHFTextField } from '../../components/hook-form';
 import RHFAutocomplete from '../../components/hook-form/RHFAutocomplete';
 import { multiple } from './../../components/Conversation/MsgTypes';
 
-const MEMBERS = ['Name 1', 'Name 2', 'Name 3' ];
+const MEMBERS = ['Name 1', 'Name 2' ];
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
